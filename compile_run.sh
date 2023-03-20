@@ -1,3 +1,4 @@
+export HADOOP_CLASSPATH=$(hadoop classpath)
 hadoop fs -rm -r /count_connected_components/output
 rm -r compiled
 mkdir compiled
