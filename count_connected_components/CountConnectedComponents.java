@@ -3,6 +3,8 @@ import java.util.StringTokenizer;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
@@ -130,9 +132,9 @@ public class CountConnectedComponents {
         }
 
     public static class TaskReducer
-        extends Reducer<IntWritable, IntWritable, IntWritable, IntWritable> {
+        extends Reducer<IntWritable, IntWritable, Text, IntWritable> {
             Logger log = Logger.getLogger(TaskReducer.class.getName());
-            DisjointSetUnion dsu = new DisjointSetUnion(); 
+            DisjointSetUnion dsu = new DisjointSetUnion(); // shared memory
 
             public void reduce(IntWritable key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
                 // log.info("Reducer phase: ");
@@ -166,15 +168,17 @@ public class CountConnectedComponents {
                 // reducer become merging the graph, by consider each pair node of graph  ???, key for the identity of each graph, if they have the same node, means they are merge-able 
                 // output of reducer phase become return id of graph and each vertex inside
 
+                log.info(dsu.getInside().toString());
+                log.info(key.toString());
 
-
+                // Output types of a combiner must match output types of a mapper. 
                 int vertex = key.get();
                 if (vertex < 0) {
                     dsu.initialize(-vertex);
                 }
                 else { 
                     dsu.initialize(vertex);
-                    for (IntWritable adjacentVertex: values){
+                    for (IntWritable adjacentVertex: values){ // duplicate process
                         int adjVertex = adjacentVertex.get(); 
                         // context.write(new IntWritable(vertex),  new IntWritable(adjVertex));
                         // context.write(new IntWritable(99999), new IntWritable(dsu.getInside().size()) );
@@ -190,15 +194,24 @@ public class CountConnectedComponents {
                         //     // log.info(Integer.toString(kk) + "    " + Integer.toString(vv)); 
                         // }  
                         // log.info("--------------------------------------------"); 
-                    }
-                    for (Map.Entry<Integer, Integer> entry : dsu.getInside().entrySet()) {
-                        int kk = entry.getKey();
-                        int vv = entry.getValue();
-                        if (vv >= -1 )
-                            context.write(new IntWritable(kk),  new IntWritable(vv));
-                        // context.write(new IntWritable(999999), new IntWritable(999999) );
-                    }    
+                    } 
                 }
+                HashSet<Integer> coreVertices = new HashSet<Integer>();
+                int sum = 0;
+                for (Map.Entry<Integer, Integer> entry : dsu.getInside().entrySet()) {
+                    int kk = entry.getKey();
+                    int vv = entry.getValue();
+                    if (vv <= -1 ){
+                        sum++; 
+                        coreVertices.add(kk); 
+                    }
+
+                }   
+                if (vertex < 0){
+                    vertex = -vertex; 
+                }
+                context.write(new Text("Number of components after adding adjacency list of " + Integer.toString(vertex) +":"),  new IntWritable(coreVertices.size()));
+
             }
         }
 
@@ -206,16 +219,20 @@ public class CountConnectedComponents {
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf, "count number of connected components program");
     job.setJarByClass(CountConnectedComponents.class);
+    
     job.setMapperClass(TaskMapper.class);
     job.setCombinerClass(TaskCombiner.class);
-    // job.setCombinerClass(TaskReducer.class);
     job.setReducerClass(TaskReducer.class);
+
     job.setMapOutputKeyClass(IntWritable.class);
     job.setMapOutputValueClass(IntWritable.class);
+    
     job.setOutputKeyClass(Text.class);
-    job.setOutputValueClass(Text.class);
+    job.setOutputValueClass(IntWritable.class);
+    
     FileInputFormat.addInputPath(job, new Path(args[0]));
     FileOutputFormat.setOutputPath(job, new Path(args[1]));
+    System.out.println("TEST THE SYSTEM OUT"); 
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
 }
