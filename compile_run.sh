@@ -15,10 +15,29 @@ export HADOOP_CLASSPATH=$(hadoop classpath)
 # hadoop jar compiledPatent.jar Patent /patent/input /patent/output
 # hadoop dfs -cat /patent/output/*
 
-hadoop fs -rm -r /count_connected_components/output
+# hadoop fs -rm -r /count_connected_components/output
+# rm -r compiled
+# mkdir compiled
+# javac -classpath ${HADOOP_CLASSPATH} -d 'compiled' 'CountConnectedComponents.java'
+# jar -cvf compiledCountConnectedComponents.jar -C compiled/ .
+# hadoop jar compiledCountConnectedComponents.jar CountConnectedComponents /count_connected_components/input /count_connected_components/output
+# hadoop dfs -cat /count_connected_components/output/*
+
+
+
+# hadoop fs -rm -r /WordCount/output
+# rm -r compiled
+# mkdir compiled
+# javac -classpath ${HADOOP_CLASSPATH} -d 'compiled' 'WordCount.java'
+# jar -cvf compiledWordCount.jar -C compiled/ .
+# hadoop jar compiledWordCount.jar WordCount /WordCount/input /WordCount/output
+# hadoop dfs -cat /WordCount/output/*
+
+
+hadoop fs -rm -r /element-wise_multiplication/output
 rm -r compiled
 mkdir compiled
-javac -classpath ${HADOOP_CLASSPATH} -d 'compiled' 'CountConnectedComponents.java'
-jar -cvf compiledCountConnectedComponents.jar -C compiled/ .
-hadoop jar compiledCountConnectedComponents.jar CountConnectedComponents /count_connected_components/input /count_connected_components/output
-hadoop dfs -cat /count_connected_components/output/*
+javac -classpath ${HADOOP_CLASSPATH} -d 'compiled' 'ElementWiseMultiplication.java'
+jar -cvf compiledElementWiseMultiplication.jar -C compiled/ .
+hadoop jar compiledElementWiseMultiplication.jar ElementWiseMultiplication /element-wise_multiplication/input /element-wise_multiplication/output
+hadoop dfs -cat /element-wise_multiplication/output/*
